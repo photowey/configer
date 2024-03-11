@@ -1,0 +1,29 @@
+[package]
+name = "configer"
+version = "0.1.0"
+edition = "2021"
+
+authors = ["photowey <photowey@gmail.com>"]
+license = "Apache-2.0"
+
+documentation = "https://docs.rs/configer"
+repository = "https://github.com/photowey/configer"
+homepage = "https://github.com/photowey/configer"
+
+description = """
+A simple configuration management implemented in Rust.
+"""
+
+readme = "README.md"
+keywords = ["configuration", "environment"]
+# https://crates.io/category_slugs
+categories = ["config"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chrono = "0.4"
+
+[dev-dependencies]
+chronounit = "0.2"
+snowflaker = { version = "0.3", features = ["dynamic"] }
