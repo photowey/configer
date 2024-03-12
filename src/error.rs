@@ -31,7 +31,10 @@ impl fmt::Display for ConfigerError {
         match *self {
             ConfigerError::EmptyKey => write!(f, "Key can't be empty"),
             ConfigerError::NonNested => {
-                write!(f, "Attempted to set a nested value on a non-nested node")
+                write!(
+                    f,
+                    "Attempted to set/get a nested value on a non-nested node"
+                )
             }
             ConfigerError::NotFound => write!(f, "Not found"),
         }

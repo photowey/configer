@@ -17,12 +17,14 @@
 // ----------------------------------------------------------------
 
 /// @since 0.1.0
-mod domain;
+pub mod domain;
 /// @since 0.1.0
 pub mod env;
+pub mod error;
 
 // ----------------------------------------------------------------
 
-mod error;
+#[cfg(test)]
+mod converter_tests;
 #[cfg(test)]
 mod tests;
