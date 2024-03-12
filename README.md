@@ -6,10 +6,10 @@ A simple configuration management implemented in Rust.
 ## `Version`
 
 - `v0.1.0`
-- `set/get`
+  - `set/get`
 
 - `v0.2.0`
-- `try_xxx`
+  - `try_xxx`
 
 ## 1.`Usage`
 
@@ -118,22 +118,22 @@ let rvt_time = configer.get("io.github.photowey.configer.Time");
 
 // match
 match rvt_time {
-Ok(node) => {
-match node {
-Node::DateTime( ref time) => {
-assert_eq ! ( * time, now);
-}
-_ => {}
-}
-}
-_ => {}
+    Ok(node) => {
+        match node {
+            Node::DateTime(ref time) => {
+                assert_eq!(*time, now);
+            }
+            _ => {}
+        }
+    }
+    _ => {}
 }
 
 // converter
 if let Some(into_value) = NodeConverter::try_datetime(rvt_time) {
-assert_eq ! ( * into_value, now);
+    assert_eq!(*into_value, now);
 } else {
-panic ! ("failed to convert the value to NaiveDateTime")
+    panic!("failed to convert the value to NaiveDateTime")
 }
 ```
 
@@ -142,13 +142,15 @@ panic ! ("failed to convert the value to NaiveDateTime")
 ```rust
 let mut configer = ConfigerEnvironment::new();
 
-configer.set("io.github.photowey.str", String::from("Rust").into()).unwrap();
+configer
+.set("io.github.photowey.str", String::from("Rust").into())
+.unwrap();
 let rvt_string = configer.get("io.github.photowey.str");
 
 if let Some(into_value) = NodeConverter::try_string(rvt_string) {
-assert_eq ! ( * into_value, String::from("Rust"));
+    assert_eq!(*into_value, String::from("Rust"));
 } else {
-panic ! ("failed to convert the value to String")
+    panic!("failed to convert the value to String")
 }
 ```
 
@@ -157,13 +159,15 @@ panic ! ("failed to convert the value to String")
 ```rust
 let mut configer = ConfigerEnvironment::new();
 
-configer.set("io.github.photowey.str", "Rust".into()).unwrap();
+configer
+.set("io.github.photowey.str", "Rust".into())
+.unwrap();
 let rvt_str = configer.get("io.github.photowey.str");
 
 if let Some(into_value) = NodeConverter::try_str(rvt_str) {
-assert_eq ! (into_value, "Rust");
+    assert_eq!(into_value, "Rust");
 } else {
-panic ! ("failed to convert the value to &str")
+    panic!("failed to convert the value to &str")
 }
 ```
 
@@ -175,19 +179,21 @@ let mut configer = ConfigerEnvironment::new();
 let mut nested = Table::new();
 nested.insert("Hello".to_string(), Node::String("Rust".to_string()));
 
-configer.set("io.github.photowey.nested", Node::Nested(nested)).unwrap();
+configer
+.set("io.github.photowey.nested", Node::Nested(nested))
+.unwrap();
 
 let rvt_nested = configer.get("io.github.photowey.nested");
 
 if let Some(into_value) = NodeConverter::try_nested(rvt_nested) {
-match into_value.get("Hello") {
-Some(node) => {
-assert_eq ! ( * node, Node::String("Rust".to_string()));
-}
-_ => {}
-}
+    match into_value.get("Hello") {
+        Some(node) => {
+            assert_eq!(*node, Node::String("Rust".to_string()));
+        }
+        _ => {}
+    }
 } else {
-panic ! ("failed to convert the value to Table")
+    panic!("failed to convert the value to Table")
 }
 ```
 
@@ -195,14 +201,14 @@ panic ! ("failed to convert the value to Table")
 
 ```rust
 let mut configer = ConfigerEnvironment::new();
-
 let now = 1710265983u32;
-
 let mut array = domain::Array::new();
 array.push(Node::String("Rust".to_string()));
 array.push(Node::IntU32(now));
 
-configer.set("io.github.photowey.array", Node::Array(array)).unwrap();
+configer
+.set("io.github.photowey.array", Node::Array(array))
+.unwrap();
 
 let rvt_array = configer.get("io.github.photowey.array");
 
@@ -211,9 +217,9 @@ image.push(Node::String("Rust".to_string()));
 image.push(Node::IntU32(now));
 
 if let Some(into_value) = NodeConverter::try_array(rvt_array) {
-assert ! (assert_array_equals(into_value, & image));
+    assert!(assert_array_equals(into_value, &image));
 } else {
-panic ! ("failed to convert the value to Table")
+    panic!("failed to convert the value to Table")
 }
 ```
 
@@ -227,9 +233,9 @@ configer.set("io.github.photowey.u128", rvt.into()).unwrap();
 let rvt_u128 = configer.get("io.github.photowey.u128");
 
 if let Some(into_value) = NodeConverter::try_int_u128(rvt_u128) {
-assert_eq ! ( * into_value, rvt);
+    assert_eq!(*into_value, rvt);
 } else {
-panic ! ("failed to convert the value to u128")
+    panic!("failed to convert the value to u128")
 }
 ```
 
@@ -243,9 +249,9 @@ configer.set("io.github.photowey.u64", rvt.into()).unwrap();
 let rvt_u64 = configer.get("io.github.photowey.u64");
 
 if let Some(into_value) = NodeConverter::try_int_u64(rvt_u64) {
-assert_eq ! ( * into_value, rvt);
+    assert_eq!(*into_value, rvt);
 } else {
-panic ! ("failed to convert the value to u64")
+    panic!("failed to convert the value to u64")
 }
 ```
 
@@ -259,9 +265,9 @@ configer.set("io.github.photowey.u32", rvt.into()).unwrap();
 let rvt_u32 = configer.get("io.github.photowey.u32");
 
 if let Some(into_value) = NodeConverter::try_int_u32(rvt_u32) {
-assert_eq ! ( * into_value, rvt);
+    assert_eq!(*into_value, rvt);
 } else {
-panic ! ("failed to convert the value to u32")
+    panic!("failed to convert the value to u32")
 }
 ```
 
@@ -275,9 +281,9 @@ configer.set("io.github.photowey.i128", rvt.into()).unwrap();
 let rvt_i128 = configer.get("io.github.photowey.i128");
 
 if let Some(into_value) = NodeConverter::try_int_i128(rvt_i128) {
-assert_eq ! ( * into_value, rvt);
+    assert_eq!(*into_value, rvt);
 } else {
-panic ! ("failed to convert the value to i128")
+    panic!("failed to convert the value to i128")
 }
 ```
 
@@ -291,9 +297,9 @@ configer.set("io.github.photowey.i64", rvt.into()).unwrap();
 let rvt_i64 = configer.get("io.github.photowey.i64");
 
 if let Some(into_value) = NodeConverter::try_int_i64(rvt_i64) {
-assert_eq ! ( * into_value, rvt);
+    assert_eq!(*into_value, rvt);
 } else {
-panic ! ("failed to convert the value to i64")
+    panic!("failed to convert the value to i64")
 }
 ```
 
@@ -307,9 +313,9 @@ configer.set("io.github.photowey.i32", rvt.into()).unwrap();
 let rvt_i32 = configer.get("io.github.photowey.i32");
 
 if let Some(into_value) = NodeConverter::try_int_i32(rvt_i32) {
-assert_eq ! ( * into_value, rvt);
+    assert_eq!(*into_value, rvt);
 } else {
-panic ! ("failed to convert the value to i32")
+    panic!("failed to convert the value to i32")
 }
 ```
 
@@ -323,9 +329,9 @@ configer.set("io.github.photowey.f64", rvt.into()).unwrap();
 let rvt_f64 = configer.get("io.github.photowey.f64");
 
 if let Some(into_value) = NodeConverter::try_float64(rvt_f64) {
-assert_eq ! ( * into_value, rvt);
+    assert_eq!(*into_value, rvt);
 } else {
-panic ! ("failed to convert the value to f64")
+    panic!("failed to convert the value to f64")
 }
 ```
 
@@ -339,9 +345,9 @@ configer.set("io.github.photowey.f32", rvt.into()).unwrap();
 let rvt_f32 = configer.get("io.github.photowey.f32");
 
 if let Some(into_value) = NodeConverter::try_float32(rvt_f32) {
-assert_eq ! ( * into_value, rvt);
+    assert_eq!(*into_value, rvt);
 } else {
-panic ! ("failed to convert the value to f32")
+    panic!("failed to convert the value to f32")
 }
 ```
 
@@ -355,9 +361,9 @@ configer.set("io.github.photowey.none", none).unwrap();
 let rvt_none = configer.get("io.github.photowey.none");
 
 if let Some(into_value) = NodeConverter::try_none(rvt_none) {
-assert_eq ! ( * into_value, ());
+    assert_eq!(*into_value, ());
 } else {
-panic ! ("failed to convert the value to none")
+    panic!("failed to convert the value to none")
 }
 ```
 
