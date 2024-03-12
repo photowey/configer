@@ -85,12 +85,23 @@ impl ConfigerEnvironment {
 
         let mut node_ref = &self.ctx;
 
-        for key in keys {
-            node_ref = match node_ref.get(key) {
-                Some(Node::Nested(ref nested)) => nested,
-                Some(node) => return Ok(node),
+        for (index, sentinel) in keys.iter().enumerate() {
+            let key = (*sentinel).to_string();
+            match node_ref.get(&key) {
+                Some(next_node) => {
+                    if index == keys.len() - 1 {
+                        return Ok(next_node);
+                    }
+
+                    match next_node {
+                        Node::Nested(nested) => {
+                            node_ref = nested;
+                        }
+                        _ => return Err(ConfigerError::NonNested),
+                    }
+                }
                 None => return Err(ConfigerError::NotFound),
-            };
+            }
         }
 
         Err(ConfigerError::NotFound)
