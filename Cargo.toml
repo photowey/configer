@@ -1,6 +1,6 @@
 [package]
 name = "configer"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 
 authors = ["photowey <photowey@gmail.com>"]
@@ -25,5 +25,7 @@ categories = ["config"]
 chrono = "0.4"
 
 [dev-dependencies]
+toml = "0.8"
+serde = { version = "1.0", features = ["derive"] }
 chronounit = "0.3"
 snowflaker = { version = "0.3", features = ["dynamic"] }

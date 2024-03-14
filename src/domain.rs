@@ -40,6 +40,8 @@ pub enum Node {
     Array(Array),
     DateTime(NaiveDateTime),
     String(String),
+    /// @since 0.3.0
+    Boolean(bool),
     /// @since 0.2.0
     IntU128(u128),
     IntU64(u64),
@@ -111,6 +113,14 @@ impl From<&str> for Node {
 
 // ----------------------------------------------------------------
 
+impl From<bool> for Node {
+    fn from(value: bool) -> Self {
+        Node::Boolean(value)
+    }
+}
+
+// ----------------------------------------------------------------
+
 impl From<i32> for Node {
     fn from(value: i32) -> Self {
         Node::Int32(value)
@@ -165,6 +175,24 @@ impl From<f32> for Node {
 
 // ----------------------------------------------------------------
 
+impl<'a> From<&'a Node> for Option<&'a Table> {
+    fn from(node: &'a Node) -> Option<&'a Table> {
+        match *node {
+            Node::Nested(ref table) => Some(table),
+            _ => None,
+        }
+    }
+}
+
+impl<'a> From<&'a Node> for Option<&'a Array> {
+    fn from(node: &'a Node) -> Option<&'a Array> {
+        match *node {
+            Node::Array(ref array) => Some(array),
+            _ => None,
+        }
+    }
+}
+
 impl<'a> From<&'a Node> for Option<&'a NaiveDateTime> {
     fn from(node: &'a Node) -> Option<&'a NaiveDateTime> {
         match *node {
@@ -183,19 +211,10 @@ impl<'a> From<&'a Node> for Option<&'a String> {
     }
 }
 
-impl<'a> From<&'a Node> for Option<&'a Table> {
-    fn from(node: &'a Node) -> Option<&'a Table> {
+impl<'a> From<&'a Node> for Option<&'a bool> {
+    fn from(node: &'a Node) -> Option<&'a bool> {
         match *node {
-            Node::Nested(ref table) => Some(table),
-            _ => None,
-        }
-    }
-}
-
-impl<'a> From<&'a Node> for Option<&'a Array> {
-    fn from(node: &'a Node) -> Option<&'a Array> {
-        match *node {
-            Node::Array(ref array) => Some(array),
+            Node::Boolean(ref val) => Some(val),
             _ => None,
         }
     }
