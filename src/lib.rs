@@ -21,10 +21,15 @@ pub mod domain;
 /// @since 0.1.0
 pub mod env;
 pub mod error;
+/// @since 0.3.0
+pub mod reader;
 
 // ----------------------------------------------------------------
 
 #[cfg(test)]
+mod tests;
+#[cfg(test)]
 mod converter_tests;
 #[cfg(test)]
-mod tests;
+#[cfg(feature = "usetoml")]
+mod toml_tests;

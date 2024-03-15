@@ -1,6 +1,6 @@
 [package]
 name = "configer"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 
 authors = ["photowey <photowey@gmail.com>"]
@@ -23,7 +23,16 @@ categories = ["config"]
 
 [dependencies]
 chrono = "0.4"
+toml = { version = "0.8", optional = true }
+serde = { version = "1.0", optional = true, features = ["derive"] }
 
 [dev-dependencies]
 chronounit = "0.3"
 snowflaker = { version = "0.3", features = ["dynamic"] }
+
+[features]
+usetoml = ["toml"]
+
+# https://docs.rs/about/metadata
+[package.metadata.docs.rs]
+features = ["usetoml"]

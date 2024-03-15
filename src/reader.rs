@@ -16,28 +16,36 @@
 
 // ----------------------------------------------------------------
 
-use crate::domain::Node;
-use crate::error::ConfigerError;
+use std::fs;
+use std::path::PathBuf;
+
+use crate::domain::Table;
+use crate::error::FileError;
 
 // ----------------------------------------------------------------
 
-/// @since 0.1.0
-pub mod standard;
+#[cfg(feature = "usetoml")]
+pub mod toml;
 
 // ----------------------------------------------------------------
 
-pub trait Environment {
-    fn set(&mut self, key: &str, value: Node) -> Result<(), ConfigerError>;
-    fn get(&self, key: &str) -> Result<&Node, ConfigerError>;
-}
+pub trait ConfigReader {
+    fn name(&self) -> String;
+    fn supports(&self, suffix: &str) -> bool;
 
-// ----------------------------------------------------------------
+    fn read_from_str(&self, data: &str) -> Result<Table, FileError>;
 
-pub trait DynamicEnvironment: Environment {
-    fn set_t<T>(&mut self, k: &str, v: &T) -> Result<(), ConfigerError>
-        where
-            T: Into<Node> + Copy,
-    {
-        self.set(k, (*v).into())
+    fn read_from_path(&self, path: &str) -> Result<Table, FileError> {
+        let canon = PathBuf::from(path).canonicalize().map_err(|_| FileError::InvalidPath(path.to_string()))?;
+        let content = fs::read_to_string(canon).map_err(|_| FileError::ReadFailed(path.to_string()))?;
+        self.read_from_str(&content)
     }
 }
+
+// ----------------------------------------------------------------
+
+pub trait ReaderRegistry {
+    fn register<T>(&mut self, reader: T) where T: ConfigReader;
+    fn try_acquire(&self, suffix: &str) -> Option<Box<dyn ConfigReader>>;
+}
+

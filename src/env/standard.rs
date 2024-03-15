@@ -39,6 +39,13 @@ impl ConfigerEnvironment {
         }
     }
 
+    /// @since 0.3.0
+    pub fn build(table: Table) -> Self {
+        Self {
+            ctx: table,
+        }
+    }
+
     fn set_nested_recursive(
         node_ref: &mut Table,
         keys: Vec<&str>,
