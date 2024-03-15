@@ -21,8 +21,11 @@ use std::fs;
 
 use toml::Value;
 
-use crate::domain::Node;
-use crate::reader;
+use crate::{domain, reader};
+use crate::domain::{Node, Table};
+use crate::domain::converter::NodeConverter;
+use crate::env::Environment;
+use crate::env::standard::ConfigerEnvironment;
 use crate::reader::ConfigReader;
 use crate::reader::toml::TomlConfigReader;
 
@@ -68,23 +71,70 @@ fn test_toml_value_to_node() {
 // ----------------------------------------------------------------
 
 #[test]
-fn test_toml_reader() {
+fn test_toml_reader_read_from_path() {
+    let toml_reader = TomlConfigReader::default();
+
+    let path = "resources/testdata/configer-dev.toml";
+    let toml_from_path_rvt = toml_reader.read_from_path(path);
+
+    if let Ok(table) = toml_from_path_rvt {
+        return assert_table(table);
+    }
+
+    panic!("Failed to read config file")
+}
+
+#[test]
+fn test_toml_reader_read_from_str() {
+    let toml_reader = TomlConfigReader::default();
+
+    let path = "resources/testdata/configer-dev.toml";
+    let content = fs::read_to_string(path).expect("Failed to read config file");
+    let toml_from_content_rvt = toml_reader.read_from_str(&content);
+
+    if let Ok(table) = toml_from_content_rvt {
+        return assert_table(table);
+    }
+
+    panic!("Failed to read config file")
+}
+
+fn assert_table(table: Table) {
+    assert!(table.contains_key("string_value"));
+    assert!(table.contains_key("floats"));
+    assert!(table.contains_key("table"));
+    assert!(table.contains_key("database"));
+}
+
+// ----------------------------------------------------------------
+
+#[test]
+fn test_build_configer_by_table() {
     let path = "resources/testdata/configer-dev.toml";
 
     let toml_reader = TomlConfigReader::default();
-
     let toml_rvt = toml_reader.read_from_path(path);
 
     if let Ok(table) = toml_rvt {
-        assert!(table.contains_key("string_value"));
-        assert!(table.contains_key("floats"));
-        assert!(table.contains_key("table"));
-        assert!(table.contains_key("database"));
+        let configer = ConfigerEnvironment::build(table);
+        let rvt_database_servers = configer.get("database.servers");
+
+        match NodeConverter::try_array(rvt_database_servers) {
+            Some(servers) => {
+                let mut array = domain::Array::new();
+                array.push(Node::String("192.168.1.1".to_string()));
+                array.push(Node::String("192.168.1.2".to_string()));
+                array.push(Node::String("192.168.1.3".to_string()));
+
+                assert!(assert_node_array_equals(servers, &array));
+            }
+            _ => panic!("Get key:[database.servers] failed")
+        }
 
         return ();
     }
 
-    panic!("TOML reader read config-dev.toml failed.")
+    panic!("Failed to read configer-dev.toml file")
 }
 
 // ----------------------------------------------------------------
@@ -107,4 +157,8 @@ fn traverse_toml(value: &Value) {
         }
         _ => println!("Unknown type"),
     }
+}
+
+fn assert_node_array_equals(array: &domain::Array, vec: &domain::Array) -> bool {
+    array.iter().zip(vec.iter()).all(|(a, b)| a == b)
 }

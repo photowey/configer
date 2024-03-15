@@ -24,7 +24,7 @@ categories = ["config"]
 [dependencies]
 chrono = "0.4"
 toml = { version = "0.8", optional = true }
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0", optional = true, features = ["derive"] }
 
 [dev-dependencies]
 chronounit = "0.3"
