@@ -19,6 +19,8 @@
 use std::error::Error;
 use std::fmt;
 
+// ----------------------------------------------------------------
+
 #[derive(Debug, PartialEq)]
 pub enum ConfigerError {
     EmptyKey,
@@ -42,3 +44,26 @@ impl fmt::Display for ConfigerError {
 }
 
 impl Error for ConfigerError {}
+
+// ----------------------------------------------------------------
+
+#[derive(Debug, PartialEq)]
+pub enum FileError {
+    InvalidPath(String),
+    ReadFailed(String),
+    IncorrectFormat(String),
+    ParseFailed(String, String),
+}
+
+impl fmt::Display for FileError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            FileError::InvalidPath(path) => write!(f, "Invalid path:[{}]", path),
+            FileError::ReadFailed(path) => write!(f, "Failed to read config file, path:[{}]", path),
+            FileError::IncorrectFormat(reader_type) => write!(f, "Incorrect {} format: Missing table data.", reader_type),
+            FileError::ParseFailed(reader_type, message) => write!(f, "Failed to parse {} file, message: {}", reader_type, message),
+        }
+    }
+}
+
+impl Error for FileError {}
