@@ -16,6 +16,7 @@
 
 // ----------------------------------------------------------------
 
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -31,6 +32,7 @@ pub mod toml;
 
 pub trait ConfigReader {
     fn name(&self) -> String;
+    fn suffix(&self) -> String;
     fn supports(&self, suffix: &str) -> bool;
 
     fn read_from_str(&self, data: &str) -> Result<Table, FileError>;
@@ -45,7 +47,41 @@ pub trait ConfigReader {
 // ----------------------------------------------------------------
 
 pub trait ReaderRegistry {
-    fn register<T>(&mut self, reader: T) where T: ConfigReader;
-    fn try_acquire(&self, suffix: &str) -> Option<Box<dyn ConfigReader>>;
+    fn register(&mut self, reader: Box<dyn ConfigReader>);
+    fn try_acquire(&self, suffix: &str) -> Option<&dyn ConfigReader>;
+    fn try_acquires(&self) -> Vec<&dyn ConfigReader>;
 }
 
+pub struct ConfigReaderRegistry {
+    readers: HashMap</*suffix*/String, Box<dyn ConfigReader>>,
+}
+
+impl ConfigReaderRegistry {
+    pub fn new() -> Self {
+        Self {
+            readers: HashMap::new(),
+        }
+    }
+}
+
+impl Default for ConfigReaderRegistry {
+    fn default() -> Self {
+        ConfigReaderRegistry::new()
+    }
+}
+
+// ----------------------------------------------------------------
+
+impl ReaderRegistry for ConfigReaderRegistry {
+    fn register(&mut self, reader: Box<dyn ConfigReader>) {
+        self.readers.insert(reader.suffix(), reader);
+    }
+
+    fn try_acquire(&self, suffix: &str) -> Option<&dyn ConfigReader> {
+        self.readers.get(suffix).map(|r| r.as_ref())
+    }
+
+    fn try_acquires(&self) -> Vec<&dyn ConfigReader> {
+        self.readers.values().map(|r| r.as_ref() as &dyn ConfigReader).collect()
+    }
+}

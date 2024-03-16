@@ -17,10 +17,14 @@
 // ----------------------------------------------------------------
 
 use std::collections::HashMap;
+use std::path::Path;
 
 use crate::domain::Table;
 use crate::env::{DynamicEnvironment, Environment, Node};
-use crate::error::ConfigerError;
+use crate::error::{ConfigerError, FileError};
+use crate::reader::{ConfigReader, ConfigReaderRegistry, ReaderRegistry};
+#[cfg(feature = "usetoml")]
+use crate::reader::toml::TomlConfigReader;
 
 // ----------------------------------------------------------------
 
@@ -30,22 +34,82 @@ const DOT: char = '.';
 
 pub struct ConfigerEnvironment {
     ctx: Table,
+    registry: Option<Box<dyn ReaderRegistry>>,
 }
 
+
+// ----------------------------------------------------------------
+
 impl ConfigerEnvironment {
+    #[cfg(not(feature = "usetoml"))]
     pub fn new() -> Self {
+        Self::mixed(Some(HashMap::new()), Some(Box::<ConfigReaderRegistry>::default()))
+    }
+
+    #[cfg(feature = "usetoml")]
+    pub fn new() -> Self {
+        let mut configer = Self::mixed(Some(HashMap::new()), Some(Box::<ConfigReaderRegistry>::default()));
+
+        configer.register_toml_reader();
+        configer
+    }
+
+    pub fn mixed(table_opt: Option<Table>, registry: Option<Box<dyn ReaderRegistry>>) -> Self {
+        if let Some(table) = table_opt {
+            return Self {
+                ctx: table,
+                registry,
+            };
+        }
+
         Self {
             ctx: HashMap::new(),
+            registry,
         }
     }
 
     /// @since 0.3.0
+    #[deprecated(since = "0.4.0", note = "use `table()` instead")]
     pub fn build(table: Table) -> Self {
-        Self {
-            ctx: table,
-        }
+        Self::table(table)
     }
 
+    /// @since 0.4.0
+    #[cfg(not(feature = "usetoml"))]
+    pub fn table(table: Table) -> Self {
+        Self::mixed(Some(table), Some(Box::<ConfigReaderRegistry>::default()))
+    }
+
+    /// @since 0.4.0
+    #[cfg(feature = "usetoml")]
+    pub fn table(table: Table) -> Self {
+        let mut configer = Self::mixed(Some(table), Some(Box::<ConfigReaderRegistry>::default()));
+
+        configer.register_toml_reader();
+        configer
+    }
+
+    /// @since 0.4.0
+    #[deprecated(since = "0.4.0", note = "use `ConfigerEnvironmentBuilder` instead")]
+    pub fn register_table(&mut self, table: Table) {
+        self.ctx = table;
+    }
+
+    /// @since 0.4.0
+    pub fn merge_table(&mut self, _: Table) {
+        panic!("Unsupported now.")
+    }
+
+    /// @since 0.4.0
+    #[cfg(feature = "usetoml")]
+    fn register_toml_reader(&mut self) {
+        if let Some(ref mut registry) = self.registry {
+            registry.register(Box::<TomlConfigReader>::default())
+        }
+    }
+}
+
+impl ConfigerEnvironment {
     fn set_nested_recursive(
         node_ref: &mut Table,
         keys: Vec<&str>,
@@ -117,6 +181,14 @@ impl ConfigerEnvironment {
 
 // ----------------------------------------------------------------
 
+impl ConfigerEnvironment {
+    pub fn builder() -> ConfigerEnvironmentBuilder {
+        ConfigerEnvironmentBuilder::default()
+    }
+}
+
+// ----------------------------------------------------------------
+
 impl Default for ConfigerEnvironment {
     fn default() -> Self {
         Self::new()
@@ -139,8 +211,103 @@ impl Environment for ConfigerEnvironment {
         let keys: Vec<&str> = key.split(DOT).collect();
         self.get_nested(keys)
     }
+
+    fn try_acquire(&self, name: &str) -> Option<&dyn ConfigReader> {
+        if let Some(ref registry) = self.registry {
+            registry.try_acquire(name)
+        } else {
+            None
+        }
+    }
+
+    fn try_acquires(&self) -> Vec<&dyn ConfigReader> {
+        if let Some(ref registry) = self.registry {
+            return registry.try_acquires();
+        }
+
+        Vec::new()
+    }
 }
 
 // ----------------------------------------------------------------
 
 impl DynamicEnvironment for ConfigerEnvironment {}
+
+// ----------------------------------------------------------------
+
+pub struct ConfigerEnvironmentBuilder {
+    table: Option<Table>,
+    registry: Option<Box<dyn ReaderRegistry>>,
+    path: Option<String>,
+}
+
+impl ConfigerEnvironmentBuilder {
+    pub fn new() -> Self {
+        Self {
+            table: None,
+            registry: None,
+            path: None,
+        }
+    }
+
+    pub fn with_table(mut self, table: Table) -> Self {
+        self.table = Some(table);
+        self
+    }
+
+    pub fn with_registry(mut self, registry: Box<dyn ReaderRegistry>) -> Self {
+        self.registry = Some(registry);
+        self
+    }
+
+    pub fn with_path(mut self, path: String) -> Self {
+        self.path = Some(path);
+        self
+    }
+
+    pub fn build(self) -> Result<ConfigerEnvironment, FileError> {
+        match (self.table, self.registry, self.path) {
+            (Some(_), Some(_), Some(_)) => {
+                // merge table -> Next...
+                panic!("Unsupported now")
+            }
+            (None, Some(registry), Some(path)) => {
+                let file_path = Path::new(&path);
+
+                if let Some(extension) = file_path.to_str().and_then(|name| Path::new(name).extension()) {
+                    let suffix = extension.to_string_lossy();
+
+                    if let Some(reader) = registry.try_acquire(suffix.as_ref()) {
+                        let rvt = reader.read_from_path(&path[..]);
+
+                        if let Ok(table) = rvt {
+                            return Ok(ConfigerEnvironment::mixed(Some(table), Some(registry)));
+                        }
+
+                        return Err(FileError::ReaderNotFound(suffix.to_string()));
+                    } // end of registry.try_acquire
+
+                    return Err(FileError::ReaderNotFound(suffix.to_string()));
+                } // end of and_then
+
+                Err(FileError::InvalidFile(path))
+            }
+            (Some(table), Some(registry), None) => {
+                return Ok(ConfigerEnvironment::mixed(Some(table), Some(registry)));
+            }
+            (Some(table), None, None) => {
+                return Ok(ConfigerEnvironment::mixed(Some(table), None));
+            }
+            _ => {
+                Ok(ConfigerEnvironment::new())
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------------------
+impl Default for ConfigerEnvironmentBuilder {
+    fn default() -> Self {
+        ConfigerEnvironmentBuilder::new()
+    }
+}

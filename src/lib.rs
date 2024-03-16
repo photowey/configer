@@ -20,6 +20,7 @@
 pub mod domain;
 /// @since 0.1.0
 pub mod env;
+/// @since 0.1.0
 pub mod error;
 /// @since 0.3.0
 pub mod reader;

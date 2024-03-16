@@ -4,21 +4,7 @@ A simple configuration management implemented in Rust.
 
 [APIs Documents](https://docs.rs/configer)
 
-## `Version`
-
-- `v0.1.0`
-  
-  - Support `set/get`
-  
-- `v0.2.0`
-  
-    - Support `try_xxx` functions
-    
-- `v0.3.0`
-
-    - Support read `toml`
-
-    
+[changelog][./CHANGELOG.md]
 
 ## 1.`Usage`
 
@@ -26,11 +12,11 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-configer = "0.3"
+configer = "0.4"
 
 # Or
 # If necessary
-configer = { version = "0.3", features = ["usetoml"] }
+configer = { version = "0.4", features = ["usetoml"] }
 ```
 
 
@@ -214,6 +200,8 @@ if let Some(into_value) = NodeConverter::try_datetime(rvt_time) {
 
 ## 3.`Reader`
 
+- `@since 0.3.0`
+
 ### 3.1.`toml`
 
 #### 3.1.1.`new`
@@ -236,7 +224,7 @@ let toml_rvt = toml_reader.read_from_path(path);
 
 
 
-##### 3.1.2.2.`Content`
+##### 3.1.2.2.`file content`
 
 ```rust
 let toml_reader = TomlConfigReader::default();
@@ -248,7 +236,63 @@ let toml_from_content_rvt = toml_reader.read_from_str(&content);
 
 
 
-## 4.`Next`
+## 4.`ConfigerEnvironmentBuilder`
+
+- `@since 0.4.0`
+
+### 4.1.`With table`
+
+```rust
+let path = "resources/testdata/configer-dev.toml";
+
+let toml_reader = TomlConfigReader::default();
+let toml_rvt = toml_reader.read_from_path(path);
+
+if let Ok(table) = toml_rvt {
+    // With table
+    let builder_rvt = ConfigerEnvironment::builder()
+    .with_table(table)
+    .build();
+
+    if let Ok(configer) = builder_rvt {
+        let rvt_database_servers = configer.get("database.servers");
+
+        return assert_configer_array(rvt_database_servers, "database.servers");
+    }
+
+    panic!("Failed to build ConfigerEnvironment")
+}
+
+panic!("Failed to read configer-dev.toml file")
+```
+
+### 4.2.`With registry and path`
+
+- Only support `toml` file now.
+
+```rust
+let path = "resources/testdata/configer-dev.toml";
+
+let toml_reader = TomlConfigReader::default();
+let mut registry = ConfigReaderRegistry::default();
+registry.register(Box::new(toml_reader));
+
+let builder_rvt = ConfigerEnvironment::builder()
+.with_registry(Box::new(registry))
+.with_path(path.to_string())
+.build();
+
+if let Ok(configer) = builder_rvt {
+    let rvt_database_servers = configer.get("database.servers");
+    return assert_configer_array(rvt_database_servers, "database.servers");
+}
+
+panic!("Failed to read configer-dev.toml file")
+```
+
+
+
+## 5.`Next`
 
 - Support load `config` files (P 0).
     - [x] `configer.toml`
@@ -267,17 +311,30 @@ let toml_from_content_rvt = toml_reader.read_from_str(&content);
 
 
 
-## 5.`Documents`
+## 6.`Documents`
 
 **Please wait a moment.**
 
 
 
-## 6.`Test`
+## 7.`Test`
 
-### 6.1.`cargo test`
+### 7.1.`cargo test`
 
 ```shell
 $ cargo test --features "usetoml" -- --show-output
 $ cargo test --features "usetoml"
 ```
+
+
+
+## 8.`Docs`
+
+### 8.1.`features`
+
+- `usetoml`
+
+```shell
+$ cargo doc --open --features usetoml
+```
+

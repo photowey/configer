@@ -18,6 +18,7 @@
 
 use crate::domain::Node;
 use crate::error::ConfigerError;
+use crate::reader::ConfigReader;
 
 // ----------------------------------------------------------------
 
@@ -29,6 +30,10 @@ pub mod standard;
 pub trait Environment {
     fn set(&mut self, key: &str, value: Node) -> Result<(), ConfigerError>;
     fn get(&self, key: &str) -> Result<&Node, ConfigerError>;
+
+    /// @since 0.4.0
+    fn try_acquire(&self, suffix: &str) -> Option<&dyn ConfigReader>;
+    fn try_acquires(&self) -> Vec<&dyn ConfigReader>;
 }
 
 // ----------------------------------------------------------------
