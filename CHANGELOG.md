@@ -9,11 +9,11 @@ A simple configuration management implemented in Rust.
     - Support `set/get`.
 
 - `v0.2.0`
-- Support `try_xxx` functions.
-    
+    - Support `try_xxx` functions.
+
 - `v0.3.0`
 
     - Support read `toml` file.
 
 - `v0.4.0`
-- Support build `ConfigerEnvironment` by `ConfigerEnvironmentBuilder`
+    - Support build `ConfigerEnvironment` by `ConfigerEnvironmentBuilder`
