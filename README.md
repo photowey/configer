@@ -4,7 +4,7 @@ A simple configuration management implemented in Rust.
 
 [APIs Documents](https://docs.rs/configer)
 
-[changelog][./CHANGELOG.md]
+[changelog](./CHANGELOG.md)
 
 ## 1.`Usage`
 
@@ -337,4 +337,3 @@ $ cargo test --features "usetoml"
 ```shell
 $ cargo doc --open --features usetoml
 ```
-
