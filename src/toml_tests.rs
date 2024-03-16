@@ -26,7 +26,8 @@ use crate::domain::{Node, Table};
 use crate::domain::converter::NodeConverter;
 use crate::env::Environment;
 use crate::env::standard::ConfigerEnvironment;
-use crate::reader::ConfigReader;
+use crate::error::ConfigerError;
+use crate::reader::{ConfigReader, ConfigReaderRegistry, ReaderRegistry};
 use crate::reader::toml::TomlConfigReader;
 
 // ----------------------------------------------------------------
@@ -116,22 +117,85 @@ fn test_build_configer_by_table() {
     let toml_rvt = toml_reader.read_from_path(path);
 
     if let Ok(table) = toml_rvt {
-        let configer = ConfigerEnvironment::build(table);
+        let configer = ConfigerEnvironment::table(table);
         let rvt_database_servers = configer.get("database.servers");
 
-        match NodeConverter::try_array(rvt_database_servers) {
-            Some(servers) => {
-                let mut array = domain::Array::new();
-                array.push(Node::String("192.168.1.1".to_string()));
-                array.push(Node::String("192.168.1.2".to_string()));
-                array.push(Node::String("192.168.1.3".to_string()));
+        return assert_configer_array(rvt_database_servers, "database.servers");
+    }
 
-                assert!(assert_node_array_equals(servers, &array));
+    panic!("Failed to read configer-dev.toml file")
+}
+
+// ----------------------------------------------------------------
+
+#[test]
+#[allow(deprecated)]
+fn test_build_configer_by_register_table() {
+    let path = "resources/testdata/configer-dev.toml";
+
+    let mut configer = ConfigerEnvironment::new();
+    if let Some(reader) = configer.try_acquire("toml") {
+        let toml_from_path_rvt = reader.read_from_path(path);
+        if let Ok(table) = toml_from_path_rvt {
+            configer.register_table(table);
+
+            let rvt_string_value = configer.get("table.table_s");
+            match NodeConverter::try_string(rvt_string_value) {
+                Some(v) => {
+                    assert_eq!(*v, "value1");
+                }
+                _ => panic!("Get key:[table.table_s] failed")
             }
-            _ => panic!("Get key:[database.servers] failed")
+
+            return ();
+        }
+    }
+
+    panic!("Failed to read configer-dev.toml file")
+}
+
+// ----------------------------------------------------------------
+
+#[test]
+fn test_build_configer_builder_with_table() {
+    let path = "resources/testdata/configer-dev.toml";
+
+    let toml_reader = TomlConfigReader::default();
+    let toml_rvt = toml_reader.read_from_path(path);
+
+    if let Ok(table) = toml_rvt {
+        let builder_rvt = ConfigerEnvironment::builder()
+            .with_table(table)
+            .build();
+
+        if let Ok(configer) = builder_rvt {
+            let rvt_database_servers = configer.get("database.servers");
+
+            return assert_configer_array(rvt_database_servers, "database.servers");
         }
 
-        return ();
+        panic!("Failed to build ConfigerEnvironment")
+    }
+
+    panic!("Failed to read configer-dev.toml file")
+}
+
+#[test]
+fn test_build_configer_builder_with_registry_and_path() {
+    let path = "resources/testdata/configer-dev.toml";
+
+    let toml_reader = TomlConfigReader::default();
+    let mut registry = ConfigReaderRegistry::default();
+    registry.register(Box::new(toml_reader));
+
+    let builder_rvt = ConfigerEnvironment::builder()
+        .with_registry(Box::new(registry))
+        .with_path(path.to_string())
+        .build();
+
+    if let Ok(configer) = builder_rvt {
+        let rvt_database_servers = configer.get("database.servers");
+        return assert_configer_array(rvt_database_servers, "database.servers");
     }
 
     panic!("Failed to read configer-dev.toml file")
@@ -156,6 +220,22 @@ fn traverse_toml(value: &Value) {
             }
         }
         _ => println!("Unknown type"),
+    }
+}
+
+// ----------------------------------------------------------------
+
+fn assert_configer_array(rvt_database_servers: Result<&Node, ConfigerError>, key: &str) {
+    match NodeConverter::try_array(rvt_database_servers) {
+        Some(servers) => {
+            let mut array = domain::Array::new();
+            array.push(Node::String("192.168.1.1".to_string()));
+            array.push(Node::String("192.168.1.2".to_string()));
+            array.push(Node::String("192.168.1.3".to_string()));
+
+            assert!(assert_node_array_equals(servers, &array));
+        }
+        _ => panic!("Failed to get key:[{}]", key)
     }
 }
 

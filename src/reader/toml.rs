@@ -60,13 +60,18 @@ impl ConfigReader for TomlConfigReader {
     fn name(&self) -> String {
         self.name.clone()
     }
+
+    fn suffix(&self) -> String {
+        self.suffix.clone()
+    }
+
     fn supports(&self, suffix: &str) -> bool {
         self.suffix.eq(suffix)
     }
 
     fn read_from_str(&self, data: &str) -> Result<Table, FileError> {
         let mut ctx: Table = Table::new();
-        let parsed_rvt: Result<Value, Error> = toml::from_str(&data);
+        let parsed_rvt: Result<Value, Error> = toml::from_str(data);
         match parsed_rvt {
             Ok(value) => {
                 if let Value::Table(table) = value {

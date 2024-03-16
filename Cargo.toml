@@ -1,6 +1,6 @@
 [package]
 name = "configer"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 
 authors = ["photowey <photowey@gmail.com>"]
@@ -31,6 +31,8 @@ chronounit = "0.3"
 snowflaker = { version = "0.3", features = ["dynamic"] }
 
 [features]
+# For tests
+#default = ["usetoml"]
 usetoml = ["toml"]
 
 # https://docs.rs/about/metadata
