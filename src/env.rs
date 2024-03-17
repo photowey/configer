@@ -39,10 +39,10 @@ pub trait Environment {
 // ----------------------------------------------------------------
 
 pub trait DynamicEnvironment: Environment {
-    fn set_t<T>(&mut self, k: &str, v: &T) -> Result<(), ConfigerError>
+    fn set_t<T>(&mut self, k: &str, v: T) -> Result<(), ConfigerError>
         where
-            T: Into<Node> + Copy,
+            T: Into<Node>,
     {
-        self.set(k, (*v).into())
+        self.set(k, v.into())
     }
 }

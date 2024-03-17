@@ -293,10 +293,10 @@ impl ConfigerEnvironmentBuilder {
                 Err(FileError::InvalidFile(path))
             }
             (Some(table), Some(registry), None) => {
-                return Ok(ConfigerEnvironment::mixed(Some(table), Some(registry)));
+                Ok(ConfigerEnvironment::mixed(Some(table), Some(registry)))
             }
             (Some(table), None, None) => {
-                return Ok(ConfigerEnvironment::mixed(Some(table), None));
+                Ok(ConfigerEnvironment::mixed(Some(table), None))
             }
             _ => {
                 Ok(ConfigerEnvironment::new())
