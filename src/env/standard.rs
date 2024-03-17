@@ -19,8 +19,8 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use crate::domain::Table;
-use crate::env::{DynamicEnvironment, Environment, Node};
+use crate::domain::{merge_tables, Table};
+use crate::env::{DynamicEnvironment, Environment, Node, try_load_env_variables};
 use crate::error::{ConfigerError, FileError};
 use crate::reader::{ConfigReader, ConfigReaderRegistry, ReaderRegistry};
 #[cfg(feature = "usetoml")]
@@ -43,12 +43,14 @@ pub struct ConfigerEnvironment {
 impl ConfigerEnvironment {
     #[cfg(not(feature = "usetoml"))]
     pub fn new() -> Self {
-        Self::mixed(Some(HashMap::new()), Some(Box::<ConfigReaderRegistry>::default()))
+        let env_table = try_load_env_variables();
+        Self::mixed(Some(env_table), Some(Box::<ConfigReaderRegistry>::default()))
     }
 
     #[cfg(feature = "usetoml")]
     pub fn new() -> Self {
-        let mut configer = Self::mixed(Some(HashMap::new()), Some(Box::<ConfigReaderRegistry>::default()));
+        let env_table = try_load_env_variables();
+        let mut configer = Self::mixed(Some(env_table), Some(Box::<ConfigReaderRegistry>::default()));
 
         configer.register_toml_reader();
         configer
@@ -62,8 +64,26 @@ impl ConfigerEnvironment {
             };
         }
 
+        let env_table = try_load_env_variables();
         Self {
-            ctx: HashMap::new(),
+            ctx: env_table,
+            registry,
+        }
+    }
+
+    pub fn mixed_with_env_variables(table_opt: Option<Table>, registry: Option<Box<dyn ReaderRegistry>>) -> Self {
+        if let Some(table) = table_opt {
+            let env_table = try_load_env_variables();
+            let merged_table = merge_tables(table, env_table);
+            return Self {
+                ctx: merged_table,
+                registry,
+            };
+        }
+
+        let env_table = try_load_env_variables();
+        Self {
+            ctx: env_table,
             registry,
         }
     }
@@ -77,13 +97,13 @@ impl ConfigerEnvironment {
     /// @since 0.4.0
     #[cfg(not(feature = "usetoml"))]
     pub fn table(table: Table) -> Self {
-        Self::mixed(Some(table), Some(Box::<ConfigReaderRegistry>::default()))
+        Self::mixed_with_env_variables(Some(table), Some(Box::<ConfigReaderRegistry>::default()))
     }
 
     /// @since 0.4.0
     #[cfg(feature = "usetoml")]
     pub fn table(table: Table) -> Self {
-        let mut configer = Self::mixed(Some(table), Some(Box::<ConfigReaderRegistry>::default()));
+        let mut configer = Self::mixed_with_env_variables(Some(table), Some(Box::<ConfigReaderRegistry>::default()));
 
         configer.register_toml_reader();
         configer
@@ -95,9 +115,17 @@ impl ConfigerEnvironment {
         self.ctx = table;
     }
 
+    /// @since 0.5.0
+    pub fn register_table_with_env_variables(&mut self, table: Table) {
+        let env_table = try_load_env_variables();
+        let merged_table = merge_tables(table, env_table);
+
+        self.ctx = merged_table;
+    }
+
     /// @since 0.4.0
-    pub fn merge_table(&mut self, _: Table) {
-        panic!("Unsupported now.")
+    pub fn merge_table(&mut self, table: Table) {
+        self.ctx = merge_tables(self.ctx.clone(), table)
     }
 
     /// @since 0.4.0
@@ -267,9 +295,28 @@ impl ConfigerEnvironmentBuilder {
 
     pub fn build(self) -> Result<ConfigerEnvironment, FileError> {
         match (self.table, self.registry, self.path) {
-            (Some(_), Some(_), Some(_)) => {
-                // merge table -> Next...
-                panic!("Unsupported now")
+            // @since 0.5.0
+            (Some(table_outer), Some(registry), Some(path)) => {
+                let file_path = Path::new(&path);
+
+                if let Some(extension) = file_path.to_str().and_then(|name| Path::new(name).extension()) {
+                    let suffix = extension.to_string_lossy();
+
+                    if let Some(reader) = registry.try_acquire(suffix.as_ref()) {
+                        let rvt = reader.read_from_path(&path[..]);
+
+                        if let Ok(table) = rvt {
+                            let merged_table = merge_tables(table, table_outer);
+                            return Ok(ConfigerEnvironment::mixed_with_env_variables(Some(merged_table), Some(registry)));
+                        }
+
+                        return Err(FileError::ReaderNotFound(suffix.to_string()));
+                    } // end of registry.try_acquire
+
+                    return Err(FileError::ReaderNotFound(suffix.to_string()));
+                } // end of and_then
+
+                Err(FileError::InvalidFile(path))
             }
             (None, Some(registry), Some(path)) => {
                 let file_path = Path::new(&path);
@@ -281,7 +328,7 @@ impl ConfigerEnvironmentBuilder {
                         let rvt = reader.read_from_path(&path[..]);
 
                         if let Ok(table) = rvt {
-                            return Ok(ConfigerEnvironment::mixed(Some(table), Some(registry)));
+                            return Ok(ConfigerEnvironment::mixed_with_env_variables(Some(table), Some(registry)));
                         }
 
                         return Err(FileError::ReaderNotFound(suffix.to_string()));

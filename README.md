@@ -322,34 +322,158 @@ panic!("Failed to read configer-dev.toml file")
 
 
 
-## 5.`Next`
+### 4.3.`With table,registry and path`
+
+```rust
+env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+
+let path = "resources/testdata/configer-dev.toml";
+
+let toml_reader = TomlConfigReader::default();
+let mut registry = ConfigReaderRegistry::default();
+registry.register(Box::new(toml_reader));
+
+let table = crate::env::try_load_env_variables();
+
+let builder_rvt = ConfigerEnvironment::builder()
+.with_table(table)
+.with_registry(Box::new(registry))
+.with_path(path.to_string())
+.build();
+
+if let Ok(configer) = builder_rvt {
+    let rvt_database_servers = configer.get("database.servers");
+    assert_configer_array(rvt_database_servers, "database.servers");
+
+    let env_var_rvt = configer.get("CONFIGER_TEST_VAR");
+    assert_eq!(env_var_rvt, Ok(&Node::String(String::from("rust.configer"))));
+
+    return ();
+}
+
+panic!("Failed to read configer-dev.toml file")
+```
+
+
+
+## 5.`Load Environment variables`
+
+### 5.1.`default`
+
+```rust
+env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+
+let configer = ConfigerEnvironment::default();
+let env_var_rvt = configer.get("CONFIGER_TEST_VAR");
+assert_eq!(env_var_rvt, Ok(&Node::String(String::from("rust.configer"))));
+```
+
+### 5.2.`new`
+
+```rust
+env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+
+let configer = ConfigerEnvironment::new();
+let env_var_rvt = configer.get("CONFIGER_TEST_VAR");
+assert_eq!(env_var_rvt, Ok(&Node::String(String::from("rust.configer"))));
+```
+
+### 5.3.`mixed_with_env_variables`
+
+```rust
+env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+
+let configer = ConfigerEnvironment::mixed_with_env_variables(None, None);
+let env_var_rvt = configer.get("CONFIGER_TEST_VAR");
+assert_eq!(env_var_rvt, Ok(&Node::String(String::from("rust.configer"))));
+```
+
+### 5.4.`table`
+
+```rust
+env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+
+let path = "resources/testdata/configer-dev.toml";
+
+let toml_reader = TomlConfigReader::default();
+let toml_rvt = toml_reader.read_from_path(path);
+
+if let Ok(table) = toml_rvt {
+    let configer = ConfigerEnvironment::table(table);
+
+    let rvt_database_servers = configer.get("database.servers");
+    assert_configer_array(rvt_database_servers, "database.servers");
+
+    let env_var_rvt = configer.get("CONFIGER_TEST_VAR");
+    assert_eq!(env_var_rvt, Ok(&Node::String(String::from("rust.configer"))));
+
+    return ();
+}
+
+panic!("Failed to read configer-dev.toml file")
+```
+
+### 5.5.`builder`
+
+```rust
+env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+
+let path = "resources/testdata/configer-dev.toml";
+
+let toml_reader = TomlConfigReader::default();
+let mut registry = ConfigReaderRegistry::default();
+registry.register(Box::new(toml_reader));
+
+let builder_rvt = ConfigerEnvironment::builder()
+.with_registry(Box::new(registry))
+.with_path(path.to_string())
+.build(); // load environment variables auto.
+
+if let Ok(configer) = builder_rvt {
+    let rvt_database_servers = configer.get("database.servers");
+    assert_configer_array(rvt_database_servers, "database.servers");
+
+    let env_var_rvt = configer.get("CONFIGER_TEST_VAR");
+    assert_eq!(env_var_rvt, Ok(&Node::String(String::from("rust.configer"))));
+
+    return ();
+}
+
+panic!("Failed to read configer-dev.toml file")
+```
+
+
+
+
+
+## 6.`Next`
 
 - Support load `config` files (P 0).
     - [x] `configer.toml`
-    - `configer-${profile}.toml`
+    - [ ] `configer-${profile}.toml`
     - …
-    - `yaml` | `yml` ?
-    - `properties` ?
-    - `ini`?
-    - `.env`?
-    - `json`?
+    - [ ] `yaml` | `yml` ?
+    - [ ] `properties` ?
+    - [ ] `ini`?
+    - [ ] `.env`?
+    - [ ] `json`?
     - …
-- Auto. load environment variables (P 1)
-- Support merge exists `Map`
+- [x] Auto. load environment variables (P 1)
+- [x] Support merge exists `HashMap<String,Node>/Table`
 - Support bind `struct`
 - …
 
 
 
-## 6.`Documents`
+## 7.`Documents`
 
 **Please wait a moment.**
 
 
 
-## 7.`Test`
+## 8.`Test`
 
-### 7.1.`cargo test`
+### 8.1.`cargo test`
 
 ```shell
 $ cargo test --features "usetoml" -- --show-output
@@ -358,9 +482,9 @@ $ cargo test --features "usetoml"
 
 
 
-## 8.`Docs`
+## 9.`Docs`
 
-### 8.1.`features`
+### 9.1.`features`
 
 - `usetoml`
 

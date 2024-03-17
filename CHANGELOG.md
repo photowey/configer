@@ -7,13 +7,22 @@ A simple configuration management implemented in Rust.
 - `v0.1.0`
 
     - Support `set/get`.
-
 - `v0.2.0`
     - Support `try_xxx` functions.
-
 - `v0.3.0`
 
     - Support read `toml` file.
-
 - `v0.4.0`
-    - Support build `ConfigerEnvironment` by `ConfigerEnvironmentBuilder`
+    - Support build `ConfigerEnvironment` by `ConfigerEnvironmentBuilder`.
+      - `with_table`
+      - `with registry` and `with path`
+- `v0.5.0`
+    - Support `Table`(`HashMap<String, Node>`) merge.
+    - `ConfigerEnvironmentBuilder`
+        - with `Table`
+            - `@since 0.4.0`
+        - with `registry` and `path`
+            - `@since 0.4.0`
+        - with `Table`,`registry` and `path`
+            - `@since 0.5.0`
+    - Support load `Environment` variables auto.
