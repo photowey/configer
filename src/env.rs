@@ -16,7 +16,9 @@
 
 // ----------------------------------------------------------------
 
-use crate::domain::Node;
+use std::env;
+
+use crate::domain::{Node, Table};
 use crate::error::ConfigerError;
 use crate::reader::ConfigReader;
 
@@ -45,4 +47,16 @@ pub trait DynamicEnvironment: Environment {
     {
         self.set(k, v.into())
     }
+}
+
+// ----------------------------------------------------------------
+pub fn try_load_env_variables() -> Table {
+    let vars: Vec<(String, String)> = env::vars().collect();
+    let mut table = Table::new();
+
+    for (key, value) in vars {
+        table.insert(key, Node::String(value));
+    }
+
+    table
 }

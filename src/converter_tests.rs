@@ -21,21 +21,20 @@ use chronounit::formatter::pattern::DateTimePattern;
 use snowflaker::snowflake_dynamic;
 
 use crate::domain;
-use crate::domain::converter::NodeConverter;
 use crate::domain::{Node, Table};
-use crate::env::standard::ConfigerEnvironment;
+use crate::domain::converter::NodeConverter;
 use crate::env::Environment;
+use crate::env::standard::ConfigerEnvironment;
 
 #[test]
+#[rustfmt::skip]
 fn test_get_converter_nested() {
     let mut configer = ConfigerEnvironment::new();
 
     let mut nested = Table::new();
     nested.insert("Hello".to_string(), Node::String("Rust".to_string()));
 
-    configer
-        .set("io.github.photowey.nested", Node::Nested(nested))
-        .unwrap();
+    configer.set("io.github.photowey.nested", Node::Nested(nested)).unwrap();
 
     let rvt_nested = configer.get("io.github.photowey.nested");
 
@@ -52,6 +51,7 @@ fn test_get_converter_nested() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_get_converter_array() {
     let mut configer = ConfigerEnvironment::new();
     let now = 1710265983u32;
@@ -59,9 +59,7 @@ fn test_get_converter_array() {
     array.push(Node::String("Rust".to_string()));
     array.push(Node::IntU32(now));
 
-    configer
-        .set("io.github.photowey.array", Node::Array(array))
-        .unwrap();
+    configer.set("io.github.photowey.array", Node::Array(array)).unwrap();
 
     let rvt_array = configer.get("io.github.photowey.array");
 
@@ -112,12 +110,11 @@ fn test_get_converter_date_time() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_get_converter_string() {
     let mut configer = ConfigerEnvironment::new();
 
-    configer
-        .set("io.github.photowey.str", String::from("Rust").into())
-        .unwrap();
+    configer.set("io.github.photowey.str", String::from("Rust").into()).unwrap();
     let rvt_string = configer.get("io.github.photowey.str");
 
     if let Some(into_value) = NodeConverter::try_string(rvt_string) {
@@ -128,12 +125,11 @@ fn test_get_converter_string() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_get_converter_str() {
     let mut configer = ConfigerEnvironment::new();
 
-    configer
-        .set("io.github.photowey.str", "Rust".into())
-        .unwrap();
+    configer.set("io.github.photowey.str", "Rust".into()).unwrap();
     let rvt_str = configer.get("io.github.photowey.str");
 
     if let Some(into_value) = NodeConverter::try_str(rvt_str) {
@@ -144,6 +140,7 @@ fn test_get_converter_str() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_get_converter_u128() {
     let mut configer = ConfigerEnvironment::new();
 
@@ -159,6 +156,7 @@ fn test_get_converter_u128() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_get_converter_u64() {
     let mut configer = ConfigerEnvironment::new();
 
@@ -174,6 +172,7 @@ fn test_get_converter_u64() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_get_converter_u32() {
     let mut configer = ConfigerEnvironment::new();
 
@@ -189,6 +188,7 @@ fn test_get_converter_u32() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_get_converter_i128() {
     let mut configer = ConfigerEnvironment::new();
 
@@ -204,6 +204,7 @@ fn test_get_converter_i128() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_get_converter_i64() {
     let mut configer = ConfigerEnvironment::new();
 
@@ -219,6 +220,7 @@ fn test_get_converter_i64() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_get_converter_i32() {
     let mut configer = ConfigerEnvironment::new();
 
@@ -234,6 +236,7 @@ fn test_get_converter_i32() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_get_converter_f64() {
     let mut configer = ConfigerEnvironment::new();
 
@@ -249,6 +252,7 @@ fn test_get_converter_f64() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_get_converter_f32() {
     let mut configer = ConfigerEnvironment::new();
 
@@ -264,6 +268,7 @@ fn test_get_converter_f32() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_get_converter_none() {
     let mut configer = ConfigerEnvironment::new();
 

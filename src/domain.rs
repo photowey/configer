@@ -17,6 +17,7 @@
 // ----------------------------------------------------------------
 
 use std::collections::HashMap;
+use std::mem;
 
 use chrono::NaiveDateTime;
 
@@ -27,13 +28,15 @@ pub mod converter;
 
 pub type Table = HashMap<String, Node>;
 
+// ----------------------------------------------------------------
+
 /// @since 0.2.0
 
 pub type Array = Vec<Node>;
 
 // ----------------------------------------------------------------
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Node {
     Nested(Table),
     /// @since 0.2.0
@@ -302,3 +305,45 @@ impl<'a> From<&'a Node> for Option<&'a ()> {
 }
 
 // ---------------------------------------------------------------- Into end
+
+// ---------------------------------------------------------------- Merge start
+
+/// Merges the content of the source table `src` into the destination table `dst`.
+///
+/// This function iterates through each item in the `src` table and performs the following actions:
+/// - For nested nodes with the same key, it recursively merges their contents.
+/// - For array nodes with the same key, it extends the destination array with the elements from the source array.
+/// - For any other node types with matching keys, it simply replaces the destination node with the source node.
+///
+/// # Parameters
+/// - `dst`: The mutable destination table which will contain the merged result.
+/// - `src`: The source table to be merged into the destination table.
+///
+/// # Returns
+/// A new table instance representing the merged content of both `dst` and `src`.
+///
+/// # Warning
+/// The [`merge_tables`] algo. is not implemented well, it just implements the function.
+pub fn merge_tables(mut dst: Table, src: Table) -> Table {
+    for (key, src_node) in src {
+        let dst_node = dst.get_mut(&key).map(mem::take);
+
+        match (dst_node, src_node) {
+            (Some(Node::Nested(mut dst_nested)), Node::Nested(src_nested)) => {
+                dst_nested = merge_tables(mem::take(&mut dst_nested), src_nested);
+                dst.insert(key, Node::Nested(dst_nested));
+            }
+            (Some(Node::Array(mut dst_array)), Node::Array(src_array)) => {
+                dst_array.extend(src_array);
+                dst.insert(key, Node::Array(dst_array));
+            }
+            (_, other_node) => {
+                dst.insert(key, other_node);
+            }
+        }
+    }
+
+    dst
+}
+
+// ---------------------------------------------------------------- Merge end

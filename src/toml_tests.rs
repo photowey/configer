@@ -16,8 +16,8 @@
 
 // ----------------------------------------------------------------
 
+use std::{env, fs};
 use std::collections::HashMap;
-use std::fs;
 
 use toml::Value;
 
@@ -196,6 +196,129 @@ fn test_build_configer_builder_with_registry_and_path() {
     if let Ok(configer) = builder_rvt {
         let rvt_database_servers = configer.get("database.servers");
         return assert_configer_array(rvt_database_servers, "database.servers");
+    }
+
+    panic!("Failed to read configer-dev.toml file")
+}
+
+// ----------------------------------------------------------------
+
+/// @since 0.5.0
+#[test]
+fn test_load_environment_variables() {
+    env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+    let configer_var = env::var("CONFIGER_TEST_VAR").unwrap();
+    assert_eq!(configer_var, "rust.configer");
+
+    let table = crate::env::try_load_env_variables();
+    let var_rvt = table.get("CONFIGER_TEST_VAR");
+
+    assert_eq!(var_rvt, Some(&Node::String(String::from("rust.configer"))));
+}
+
+// ----------------------------------------------------------------
+
+/// @since 0.5.0
+#[test]
+fn test_build_configer_builder_with_table_registry_and_path() {
+    env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+
+    let path = "resources/testdata/configer-dev.toml";
+
+    let toml_reader = TomlConfigReader::default();
+    let mut registry = ConfigReaderRegistry::default();
+    registry.register(Box::new(toml_reader));
+
+    let table = crate::env::try_load_env_variables();
+
+    let builder_rvt = ConfigerEnvironment::builder()
+        .with_table(table)
+        .with_registry(Box::new(registry))
+        .with_path(path.to_string())
+        .build();
+
+    if let Ok(configer) = builder_rvt {
+        let rvt_database_servers = configer.get("database.servers");
+        assert_configer_array(rvt_database_servers, "database.servers");
+
+        let env_var_rvt = configer.get("CONFIGER_TEST_VAR");
+        assert_eq!(env_var_rvt, Ok(&Node::String(String::from("rust.configer"))));
+
+        return ();
+    }
+
+    panic!("Failed to read configer-dev.toml file")
+}
+
+/// @since 0.5.0
+#[test]
+fn test_build_configer_builder_without_table_with_registry_and_path() {
+    env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+
+    let path = "resources/testdata/configer-dev.toml";
+
+    let toml_reader = TomlConfigReader::default();
+    let mut registry = ConfigReaderRegistry::default();
+    registry.register(Box::new(toml_reader));
+
+    let builder_rvt = ConfigerEnvironment::builder()
+        .with_registry(Box::new(registry))
+        .with_path(path.to_string())
+        .build(); // load environment variables auto.
+
+    if let Ok(configer) = builder_rvt {
+        let rvt_database_servers = configer.get("database.servers");
+        assert_configer_array(rvt_database_servers, "database.servers");
+
+        let env_var_rvt = configer.get("CONFIGER_TEST_VAR");
+        assert_eq!(env_var_rvt, Ok(&Node::String(String::from("rust.configer"))));
+
+        return ();
+    }
+
+    panic!("Failed to read configer-dev.toml file")
+}
+
+/// @since 0.5.0
+#[test]
+fn test_default_configer_with_enn_variables() {
+    env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+
+    let configer = ConfigerEnvironment::default();
+    let env_var_rvt = configer.get("CONFIGER_TEST_VAR");
+    assert_eq!(env_var_rvt, Ok(&Node::String(String::from("rust.configer"))));
+}
+
+/// @since 0.5.0
+#[test]
+fn test_mixed_configer_with_enn_variables() {
+    env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+
+    let configer = ConfigerEnvironment::mixed_with_env_variables(None, None);
+    let env_var_rvt = configer.get("CONFIGER_TEST_VAR");
+    assert_eq!(env_var_rvt, Ok(&Node::String(String::from("rust.configer"))));
+}
+
+/// @since 0.5.0
+#[test]
+fn test_table_configer_with_enn_variables() {
+    env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+
+    let path = "resources/testdata/configer-dev.toml";
+
+    let toml_reader = TomlConfigReader::default();
+    let toml_rvt = toml_reader.read_from_path(path);
+
+    if let Ok(table) = toml_rvt {
+        let configer = ConfigerEnvironment::table(table);
+
+        let rvt_database_servers = configer.get("database.servers");
+        assert_configer_array(rvt_database_servers, "database.servers");
+
+        let env_var_rvt = configer.get("CONFIGER_TEST_VAR");
+        assert_eq!(env_var_rvt, Ok(&Node::String(String::from("rust.configer"))));
+
+        return ();
     }
 
     panic!("Failed to read configer-dev.toml file")

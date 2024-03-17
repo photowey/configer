@@ -326,16 +326,16 @@ panic!("Failed to read configer-dev.toml file")
 
 - Support load `config` files (P 0).
     - [x] `configer.toml`
-    - `configer-${profile}.toml`
+    - [ ] `configer-${profile}.toml`
     - …
-    - `yaml` | `yml` ?
-    - `properties` ?
-    - `ini`?
-    - `.env`?
-    - `json`?
+    - [ ] `yaml` | `yml` ?
+    - [ ] `properties` ?
+    - [ ] `ini`?
+    - [ ] `.env`?
+    - [ ] `json`?
     - …
-- Auto. load environment variables (P 1)
-- Support merge exists `Map`
+- [x] Auto. load environment variables (P 1)
+- [x] Support merge exists `HashMap<String,Node>/Table`
 - Support bind `struct`
 - …
 
