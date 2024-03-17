@@ -68,6 +68,36 @@ configer.set("io.github.photowey.configer.Time", now.into()).unwrap();
 
 
 
+#### 2.2.3.`set_t`
+
+- Update signature  `@since 0.4.3`
+
+```rust
+let mut configer = ConfigerEnvironment::new();
+// set
+// configer.set("io.github.photowey.string", String::from("Hello, Configer!").into()).unwrap();
+// set_t
+configer.set_t("io.github.photowey.string", String::from("Hello, Configer!")).unwrap();
+
+// set
+// configer.set("io.github.photowey.str", "Rust".into()).unwrap();
+// set_t
+configer.set_t("io.github.photowey.str", "Rust").unwrap();
+
+let rvt = snowflake_dynamic!().unwrap() as i64;
+configer.set_t("io.github.photowey.i32", 123_i32).unwrap();
+configer.set_t("io.github.photowey.i64", rvt).unwrap();
+
+let pi = PI as f64;
+configer.set_t("io.github.photowey.configer.f32", 9527.8848_f32).unwrap();
+configer.set_t("io.github.photowey.configer.f64", pi).unwrap();
+
+let now = NaiveDateTime::parse_from_str("2024-03-11 22:50:00", DateTimePattern::YYYY_MM_DD_HH_MM_SS).unwrap();
+configer.set_t("io.github.photowey.configer.Time", now).unwrap();
+```
+
+
+
 ### 2.3.`get`
 
 #### 2.3.1.`Err`

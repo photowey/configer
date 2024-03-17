@@ -23,39 +23,27 @@ use chronounit::formatter::pattern::DateTimePattern;
 use snowflaker::snowflake_dynamic;
 
 use crate::domain::Node;
+use crate::env::{DynamicEnvironment, Environment};
 use crate::env::standard::ConfigerEnvironment;
-use crate::env::Environment;
 use crate::error::ConfigerError;
 
 // ----------------------------------------------------------------
 
 #[test]
+#[rustfmt::skip]
 fn test_set() {
     let mut configer = ConfigerEnvironment::new();
 
-    configer
-        .set(
-            "io.github.photowey.string",
-            String::from("Hello, Configer!").into(),
-        )
-        .unwrap();
-    configer
-        .set("io.github.photowey.str", "Rust".into())
-        .unwrap();
+    configer.set("io.github.photowey.string", String::from("Hello, Configer!").into()).unwrap();
+    configer.set("io.github.photowey.str", "Rust".into()).unwrap();
 
     let rvt = snowflake_dynamic!().unwrap() as i64;
-    configer
-        .set("io.github.photowey.i32", 123_i32.into())
-        .unwrap();
+    configer.set("io.github.photowey.i32", 123_i32.into()).unwrap();
     configer.set("io.github.photowey.i64", rvt.into()).unwrap();
 
     let pi = PI as f64;
-    configer
-        .set("io.github.photowey.configer.f32", 9527.8848_f32.into())
-        .unwrap();
-    configer
-        .set("io.github.photowey.configer.f64", pi.into())
-        .unwrap();
+    configer.set("io.github.photowey.configer.f32", 9527.8848_f32.into()).unwrap();
+    configer.set("io.github.photowey.configer.f64", pi.into()).unwrap();
 
     let now =
         NaiveDateTime::parse_from_str("2024-03-11 22:50:00", DateTimePattern::YYYY_MM_DD_HH_MM_SS)
@@ -66,12 +54,30 @@ fn test_set() {
 }
 
 #[test]
+#[rustfmt::skip]
+fn test_set_t() {
+    let mut configer = ConfigerEnvironment::new();
+    configer.set_t("io.github.photowey.string", String::from("Hello, Configer!")).unwrap();
+    configer.set_t("io.github.photowey.str", "Rust").unwrap();
+
+    let rvt = snowflake_dynamic!().unwrap() as i64;
+    configer.set_t("io.github.photowey.i32", 123_i32).unwrap();
+    configer.set_t("io.github.photowey.i64", rvt).unwrap();
+
+    let pi = PI as f64;
+    configer.set_t("io.github.photowey.configer.f32", 9527.8848_f32).unwrap();
+    configer.set_t("io.github.photowey.configer.f64", pi).unwrap();
+
+    let now = NaiveDateTime::parse_from_str("2024-03-11 22:50:00", DateTimePattern::YYYY_MM_DD_HH_MM_SS).unwrap();
+    configer.set_t("io.github.photowey.configer.Time", now).unwrap();
+}
+
+#[test]
+#[rustfmt::skip]
 fn test_set_empty_key() {
     let mut configer = ConfigerEnvironment::new();
 
-    let now =
-        NaiveDateTime::parse_from_str("2024-03-11 22:50:00", DateTimePattern::YYYY_MM_DD_HH_MM_SS)
-            .unwrap();
+    let now = NaiveDateTime::parse_from_str("2024-03-11 22:50:00", DateTimePattern::YYYY_MM_DD_HH_MM_SS).unwrap();
     let empty_rvt = configer.set("", now.into());
     assert_eq!(empty_rvt, Err(ConfigerError::EmptyKey));
 
@@ -80,39 +86,72 @@ fn test_set_empty_key() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_get() {
     let mut configer = ConfigerEnvironment::new();
 
-    configer
-        .set(
-            "io.github.photowey.string",
-            String::from("Hello, Configer!").into(),
-        )
-        .unwrap();
-    configer
-        .set("io.github.photowey.str", "Rust".into())
-        .unwrap();
+    configer.set("io.github.photowey.string", String::from("Hello, Configer!").into()).unwrap();
+    configer.set("io.github.photowey.str", "Rust".into()).unwrap();
 
     let rvt = snowflake_dynamic!().unwrap() as i64;
-    configer
-        .set("io.github.photowey.i32", 123_i32.into())
-        .unwrap();
+    configer.set("io.github.photowey.i32", 123_i32.into()).unwrap();
     configer.set("io.github.photowey.i64", rvt.into()).unwrap();
 
     let pi = PI as f64;
-    configer
-        .set("io.github.photowey.configer.f32", 9527.8848_f32.into())
-        .unwrap();
-    configer
-        .set("io.github.photowey.configer.f64", pi.into())
-        .unwrap();
+    configer.set("io.github.photowey.configer.f32", 9527.8848_f32.into()).unwrap();
+    configer.set("io.github.photowey.configer.f64", pi.into()).unwrap();
 
-    let now =
-        NaiveDateTime::parse_from_str("2024-03-11 22:50:00", DateTimePattern::YYYY_MM_DD_HH_MM_SS)
-            .unwrap();
-    configer
-        .set("io.github.photowey.configer.Time", now.into())
-        .unwrap();
+    let now = NaiveDateTime::parse_from_str("2024-03-11 22:50:00", DateTimePattern::YYYY_MM_DD_HH_MM_SS).unwrap();
+    configer.set("io.github.photowey.configer.Time", now.into()).unwrap();
+
+    assert_eq!(
+        configer.get("io.github.photowey.string"),
+        Ok(&Node::String(String::from("Hello, Configer!").into()))
+    );
+    assert_eq!(
+        configer.get("io.github.photowey.str"),
+        Ok(&Node::String(String::from("Rust").into()))
+    );
+    assert_eq!(
+        configer.get("io.github.photowey.i32"),
+        Ok(&Node::Int32(123_i32))
+    );
+    assert_eq!(
+        configer.get("io.github.photowey.i64"),
+        Ok(&Node::Int64(rvt))
+    );
+    assert_eq!(
+        configer.get("io.github.photowey.configer.f32"),
+        Ok(&Node::Float32(9527.8848_f32))
+    );
+    assert_eq!(
+        configer.get("io.github.photowey.configer.f64"),
+        Ok(&Node::Float64(pi))
+    );
+    assert_eq!(
+        configer.get("io.github.photowey.configer.Time"),
+        Ok(&Node::DateTime(now))
+    );
+}
+
+#[test]
+#[rustfmt::skip]
+fn test_get_by_set_t() {
+    let mut configer = ConfigerEnvironment::new();
+
+    configer.set_t("io.github.photowey.string", String::from("Hello, Configer!")).unwrap();
+    configer.set_t("io.github.photowey.str", "Rust").unwrap();
+
+    let rvt = snowflake_dynamic!().unwrap() as i64;
+    configer.set_t("io.github.photowey.i32", 123_i32).unwrap();
+    configer.set_t("io.github.photowey.i64", rvt).unwrap();
+
+    let pi = PI as f64;
+    configer.set_t("io.github.photowey.configer.f32", 9527.8848_f32).unwrap();
+    configer.set_t("io.github.photowey.configer.f64", pi).unwrap();
+
+    let now = NaiveDateTime::parse_from_str("2024-03-11 22:50:00", DateTimePattern::YYYY_MM_DD_HH_MM_SS).unwrap();
+    configer.set_t("io.github.photowey.configer.Time", now).unwrap();
 
     assert_eq!(
         configer.get("io.github.photowey.string"),
