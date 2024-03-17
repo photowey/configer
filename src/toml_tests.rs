@@ -291,6 +291,16 @@ fn test_default_configer_with_enn_variables() {
 
 /// @since 0.5.0
 #[test]
+fn test_new_configer_with_enn_variables() {
+    env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+
+    let configer = ConfigerEnvironment::new();
+    let env_var_rvt = configer.get("CONFIGER_TEST_VAR");
+    assert_eq!(env_var_rvt, Ok(&Node::String(String::from("rust.configer"))));
+}
+
+/// @since 0.5.0
+#[test]
 fn test_mixed_configer_with_enn_variables() {
     env::set_var("CONFIGER_TEST_VAR", "rust.configer");
 
@@ -301,7 +311,7 @@ fn test_mixed_configer_with_enn_variables() {
 
 /// @since 0.5.0
 #[test]
-fn test_table_configer_with_enn_variables() {
+fn test_table_configer_with_env_variables() {
     env::set_var("CONFIGER_TEST_VAR", "rust.configer");
 
     let path = "resources/testdata/configer-dev.toml";
