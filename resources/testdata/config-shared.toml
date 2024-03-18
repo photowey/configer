@@ -1,0 +1,4 @@
+strings = ["apple", "banana", "orange"]
+integers = [1, 2, 3]
+floats = [1.024, 10.24, 102, 4]
+booleans = [true, false, true]

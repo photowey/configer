@@ -250,6 +250,85 @@ fn test_build_configer_builder_with_table_registry_and_path() {
     panic!("Failed to read configer-dev.toml file")
 }
 
+#[test]
+fn test_build_configer_builder_with_registry_path_and_profiles() {
+    env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+
+    let path = "resources/testdata/config.toml";
+
+    let toml_reader = TomlConfigReader::default();
+    let mut registry = ConfigReaderRegistry::default();
+    registry.register(Box::new(toml_reader));
+
+    let builder_rvt = ConfigerEnvironment::builder()
+        .with_registry(Box::new(registry))
+        .with_path(path.to_string())
+        .with_profiles(vec![String::from("dev"), String::from("shared")])
+        .build();
+
+    if let Ok(configer) = builder_rvt {
+        // config-dev.toml
+        let rvt_database_servers = configer.get("database.servers");
+        assert_configer_array(rvt_database_servers, "database.servers");
+
+        let env_var_rvt = configer.get("CONFIGER_TEST_VAR");
+        assert_eq!(env_var_rvt, Ok(&Node::String(String::from("rust.configer"))));
+
+        // config-shared.toml
+        let config_shared_rvt = configer.get("strings");
+        assert_configer_array_strings(config_shared_rvt, "strings");
+
+        // config.toml
+        let config_bool_rvt = configer.get("boolean_value");
+        assert_eq!(config_bool_rvt, Ok(&Node::Boolean(true)));
+
+        return ();
+    }
+
+    panic!("Failed to read configer-[dev, shared].toml file")
+}
+
+#[test]
+fn test_build_configer_builder_with_table_registry_path_and_profiles() {
+    env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+
+    let path = "resources/testdata/config.toml";
+
+    let toml_reader = TomlConfigReader::default();
+    let mut registry = ConfigReaderRegistry::default();
+    registry.register(Box::new(toml_reader));
+
+    let table = crate::env::try_load_env_variables();
+
+    let builder_rvt = ConfigerEnvironment::builder()
+        .with_table(table)
+        .with_registry(Box::new(registry))
+        .with_path(path.to_string())
+        .with_profiles(vec![String::from("dev"), String::from("shared")])
+        .build();
+
+    if let Ok(configer) = builder_rvt {
+        // config-dev.toml
+        let rvt_database_servers = configer.get("database.servers");
+        assert_configer_array(rvt_database_servers, "database.servers");
+
+        let env_var_rvt = configer.get("CONFIGER_TEST_VAR");
+        assert_eq!(env_var_rvt, Ok(&Node::String(String::from("rust.configer"))));
+
+        // config-shared.toml
+        let config_shared_rvt = configer.get("strings");
+        assert_configer_array_strings(config_shared_rvt, "strings");
+
+        // config.toml
+        let config_bool_rvt = configer.get("boolean_value");
+        assert_eq!(config_bool_rvt, Ok(&Node::Boolean(true)));
+
+        return ();
+    }
+
+    panic!("Failed to read configer-[dev, shared].toml file")
+}
+
 /// @since 0.5.0
 #[test]
 fn test_build_configer_builder_without_table_with_registry_and_path() {
@@ -371,6 +450,21 @@ fn assert_configer_array(rvt_database_servers: Result<&Node, ConfigerError>, key
         _ => panic!("Failed to get key:[{}]", key)
     }
 }
+
+fn assert_configer_array_strings(rvt_database_servers: Result<&Node, ConfigerError>, key: &str) {
+    match NodeConverter::try_array(rvt_database_servers) {
+        Some(servers) => {
+            let mut array = domain::Array::new();
+            array.push(Node::String("apple".to_string()));
+            array.push(Node::String("banana".to_string()));
+            array.push(Node::String("orange".to_string()));
+
+            assert!(assert_node_array_equals(servers, &array));
+        }
+        _ => panic!("Failed to get key:[{}]", key)
+    }
+}
+
 
 fn assert_node_array_equals(array: &domain::Array, vec: &domain::Array) -> bool {
     array.iter().zip(vec.iter()).all(|(a, b)| a == b)
