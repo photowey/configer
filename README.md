@@ -12,11 +12,11 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-configer = "0.4"
+configer = "0.5"
 
 # Or
 # If necessary
-configer = { version = "0.4", features = ["usetoml"] }
+configer = { version = "0.5", features = ["usetoml"] }
 ```
 
 

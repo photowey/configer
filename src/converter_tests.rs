@@ -141,6 +141,21 @@ fn test_get_converter_str() {
 
 #[test]
 #[rustfmt::skip]
+fn test_get_converter_bool() {
+    let mut configer = ConfigerEnvironment::new();
+
+    configer.set("io.github.photowey.bool", false.into()).unwrap();
+    let rvt_bool = configer.get("io.github.photowey.bool");
+
+    if let Some(into_value) = NodeConverter::try_bool(rvt_bool) {
+        assert_eq!(*into_value, false);
+    } else {
+        panic!("failed to convert the value to false")
+    }
+}
+
+#[test]
+#[rustfmt::skip]
 fn test_get_converter_u128() {
     let mut configer = ConfigerEnvironment::new();
 

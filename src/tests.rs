@@ -60,6 +60,7 @@ fn test_set_t() {
     let mut configer = ConfigerEnvironment::new();
     configer.set_t("io.github.photowey.string", String::from("Hello, Configer!")).unwrap();
     configer.set_t("io.github.photowey.str", "Rust").unwrap();
+    configer.set_t("io.github.photowey.bool", true).unwrap();
 
     let rvt = snowflake_dynamic!().unwrap() as i64;
     configer.set_t("io.github.photowey.i32", 123_i32).unwrap();
@@ -143,6 +144,7 @@ fn test_get_by_set_t() {
 
     configer.set_t("io.github.photowey.string", String::from("Hello, Configer!")).unwrap();
     configer.set_t("io.github.photowey.str", "Rust").unwrap();
+    configer.set_t("io.github.photowey.bool", true).unwrap();
 
     let rvt = snowflake_dynamic!().unwrap() as i64;
     configer.set_t("io.github.photowey.i32", 123_i32).unwrap();
@@ -162,6 +164,10 @@ fn test_get_by_set_t() {
     assert_eq!(
         configer.get("io.github.photowey.str"),
         Ok(&Node::String(String::from("Rust").into()))
+    );
+    assert_eq!(
+        configer.get("io.github.photowey.bool"),
+        Ok(&Node::Boolean(true))
     );
     assert_eq!(
         configer.get("io.github.photowey.i32"),

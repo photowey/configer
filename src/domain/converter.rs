@@ -50,6 +50,14 @@ impl NodeConverter {
         }
     }
 
+    /// @since 0.5.1
+    pub fn try_bool(rvt: Result<&Node, ConfigerError>) -> Option<&bool> {
+        match rvt {
+            Ok(Node::Boolean(b)) => Some(b),
+            _ => None,
+        }
+    }
+
     pub fn try_nested(rvt: Result<&Node, ConfigerError>) -> Option<&Table> {
         match rvt {
             Ok(node) => node.into(),
