@@ -26,3 +26,9 @@ A simple configuration management implemented in Rust.
         - with `Table`,`registry` and `path`
             - `@since 0.5.0`
     - Support load `Environment` variables auto.
+- `v0.6.0`
+    - Support read `${config}-${profile}` files.
+        - `with_profiles(vec![String::from("dev"), String::from("shared")])`
+        - `config.toml`
+            - `config-dev.toml`
+            - `config-shared.toml`

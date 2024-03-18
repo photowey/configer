@@ -16,6 +16,7 @@
 
 // ----------------------------------------------------------------
 
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -267,6 +268,7 @@ pub struct ConfigerEnvironmentBuilder {
     table: Option<Table>,
     registry: Option<Box<dyn ReaderRegistry>>,
     path: Option<String>,
+    profiles: Option<Vec<String>>,
 }
 
 impl ConfigerEnvironmentBuilder {
@@ -275,6 +277,7 @@ impl ConfigerEnvironmentBuilder {
             table: None,
             registry: None,
             path: None,
+            profiles: None,
         }
     }
 
@@ -293,6 +296,34 @@ impl ConfigerEnvironmentBuilder {
         self
     }
 
+    pub fn with_profiles(mut self, profiles: Vec<String>) -> Self {
+        self.profiles = Some(profiles);
+        self
+    }
+
+    /// Constructs a [`ConfigerEnvironment`] by reading from provided components.
+    ///
+    /// This method, `build`, takes the current instance's `table`, `registry` and `path` fields into account to generate a
+    /// configuration environment. Depending on the combination of these values:
+    ///
+    /// - If all three (`table`, `registry`, and `path`) are present, it attempts to read from the file at the specified path,
+    ///   using the registry to find an appropriate reader based on the file extension. It then merges the contents with
+    ///   `table_outer` and, if profiles are provided, applies the profile configurations as well.
+    /// - If only `registry` and `path` are given, it follows a similar process but uses an empty table to start with.
+    /// - If only `table` and `registry` are provided, it creates an environment that combines them without involving a file read.
+    /// - If only `table` is provided, it constructs an environment with the given table and no registry.
+    /// - In the absence of any specific input, it returns a default [`ConfigerEnvironment`].
+    ///
+    /// # Returns
+    ///
+    /// A `Result<[`ConfigerEnvironment`], [`FileError`]>` indicating whether the construction was successful or encountered an error.
+    ///
+    /// On success, returns a configured [`ConfigerEnvironment`] that may have merged tables and/or is associated with a registry.
+    /// On failure, returns a [`FileError`] variant describing the issue encountered (e.g., [`FileError::ReaderNotFound`], [`FileError::InvalidFile`]).
+    ///
+    /// # Warning
+    /// Since the match branch considers many situations, the implementation of the build method seems more complicated.
+    /// Just clarify what each branch does when reading.
     pub fn build(self) -> Result<ConfigerEnvironment, FileError> {
         match (self.table, self.registry, self.path) {
             // @since 0.5.0
@@ -306,7 +337,17 @@ impl ConfigerEnvironmentBuilder {
                         let rvt = reader.read_from_path(&path[..]);
 
                         if let Ok(table) = rvt {
-                            let merged_table = merge_tables(table, table_outer);
+                            let mut merged_table = merge_tables(table, table_outer);
+
+                            if let Some(profiles) = self.profiles {
+                                for profile in profiles {
+                                    let rvt_profile = Self::read_config_profile_file(file_path, &suffix, reader, profile);
+                                    if let Ok(table_profile) = rvt_profile {
+                                        merged_table = merge_tables(merged_table, table_profile);
+                                    }
+                                }
+                            }
+
                             return Ok(ConfigerEnvironment::mixed_with_env_variables(Some(merged_table), Some(registry)));
                         }
 
@@ -328,7 +369,17 @@ impl ConfigerEnvironmentBuilder {
                         let rvt = reader.read_from_path(&path[..]);
 
                         if let Ok(table) = rvt {
-                            return Ok(ConfigerEnvironment::mixed_with_env_variables(Some(table), Some(registry)));
+                            let mut merged_table = table;
+                            if let Some(profiles) = self.profiles {
+                                for profile in profiles {
+                                    let rvt_profile = Self::read_config_profile_file(file_path, &suffix, reader, profile);
+                                    if let Ok(table_profile) = rvt_profile {
+                                        merged_table = merge_tables(merged_table, table_profile);
+                                    }
+                                }
+                            }
+
+                            return Ok(ConfigerEnvironment::mixed_with_env_variables(Some(merged_table), Some(registry)));
                         }
 
                         return Err(FileError::ReaderNotFound(suffix.to_string()));
@@ -350,9 +401,26 @@ impl ConfigerEnvironmentBuilder {
             }
         }
     }
+
+    /// @since 0.6.0
+    fn read_config_profile_file(file_path: &Path, suffix: &Cow<str>, reader: &dyn ConfigReader, profile: String) -> Result<Table, FileError> {
+        let parent_path = file_path.parent().unwrap();
+        let file_stem = file_path.file_stem().unwrap();
+        // e.g.: config-dev.toml
+        let file_name_with_profile = format!(
+            "{}-{}.{}",
+            file_stem.to_string_lossy(),
+            profile,
+            suffix
+        );
+
+        let profile_config_file_path = parent_path.join(file_name_with_profile);
+        reader.read_from_path(profile_config_file_path.to_str().unwrap())
+    }
 }
 
 // ----------------------------------------------------------------
+
 impl Default for ConfigerEnvironmentBuilder {
     fn default() -> Self {
         ConfigerEnvironmentBuilder::new()

@@ -1,0 +1,4 @@
+string_value = "Hello configer!"
+integer_value = 9527
+float_value = 3.8848
+boolean_value = true

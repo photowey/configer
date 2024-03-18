@@ -12,11 +12,11 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-configer = "0.5"
+configer = "0.6"
 
 # Or
 # If necessary
-configer = { version = "0.5", features = ["usetoml"] }
+configer = { version = "0.6", features = ["usetoml"] }
 ```
 
 
@@ -356,6 +356,52 @@ panic!("Failed to read configer-dev.toml file")
 
 
 
+### 4.4.`With table,registry,path and profiles`
+
+- `@since 0.6.0`
+
+```rust
+env::set_var("CONFIGER_TEST_VAR", "rust.configer");
+
+let path = "resources/testdata/config.toml";
+
+let toml_reader = TomlConfigReader::default();
+let mut registry = ConfigReaderRegistry::default();
+registry.register(Box::new(toml_reader));
+
+let builder_rvt = ConfigerEnvironment::builder()
+.with_registry(Box::new(registry))
+.with_path(path.to_string())
+// with profiles
+.with_profiles(vec![String::from("dev"), String::from("shared")])
+.build();
+
+if let Ok(configer) = builder_rvt {
+    // config-dev.toml
+    let rvt_database_servers = configer.get("database.servers");
+    assert_configer_array(rvt_database_servers, "database.servers");
+
+    let env_var_rvt = configer.get("CONFIGER_TEST_VAR");
+    assert_eq!(env_var_rvt, Ok(&Node::String(String::from("rust.configer"))));
+
+    // config-shared.toml
+    let config_shared_rvt = configer.get("strings");
+    assert_configer_array_strings(config_shared_rvt, "strings");
+
+    // config.toml
+    let config_bool_rvt = configer.get("boolean_value");
+    assert_eq!(config_bool_rvt, Ok(&Node::Boolean(true)));
+
+    return ();
+}
+
+panic!("Failed to read configer-[dev, shared].toml file")
+```
+
+
+
+
+
 ## 5.`Load Environment variables`
 
 ### 5.1.`default`
@@ -450,7 +496,11 @@ panic!("Failed to read configer-dev.toml file")
 
 - Support load `config` files (P 0).
     - [x] `configer.toml`
-    - [ ] `configer-${profile}.toml`
+      - [x] `@since 0.3.0`
+    - [x] `configer-${profile}.toml`
+      - [x] `@since 0.6.0`
+      - [x] `ConfigerEnvironmentBuilder`
+        - [x] `with_profiles`
     - …
     - [ ] `yaml` | `yml` ?
     - [ ] `properties` ?
