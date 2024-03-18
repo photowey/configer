@@ -32,7 +32,7 @@ snowflaker = { version = "0.3", features = ["dynamic"] }
 
 [features]
 # For tests
-default = ["usetoml"]
+#default = ["usetoml"]
 usetoml = ["toml"]
 
 # https://docs.rs/about/metadata
